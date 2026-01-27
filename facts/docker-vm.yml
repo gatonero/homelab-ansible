@@ -1,0 +1,13 @@
+hostname: docker-vm
+fqdn: docker-vm.home.arpa
+os:
+  distribution: Debian
+  version: 13.3
+  release: trixie
+kernel: 6.12.63+deb13-amd64
+architecture: x86_64
+virtualization:
+  role: guest
+  type: kvm
+cpu_cores: 4
+memory_mb: 3921

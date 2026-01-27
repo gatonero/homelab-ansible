@@ -1,0 +1,32 @@
+---
+- name: Gather system facts and store them (read-only)
+  hosts: all
+  gather_facts: true
+
+  tasks:
+    - name: Ensure local facts directory exists
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/../facts"
+        state: directory
+        mode: "0755"
+      delegate_to: localhost
+      run_once: true
+
+    - name: Write selected facts to file
+      ansible.builtin.copy:
+        dest: "{{ playbook_dir }}/../facts/{{ inventory_hostname }}.yml"
+        content: |
+          hostname: {{ ansible_facts.hostname }}
+          fqdn: {{ ansible_facts.fqdn }}
+          os:
+            distribution: {{ ansible_facts.distribution }}
+            version: {{ ansible_facts.distribution_version }}
+            release: {{ ansible_facts.distribution_release }}
+          kernel: {{ ansible_facts.kernel }}
+          architecture: {{ ansible_facts.architecture }}
+          virtualization:
+            role: {{ ansible_facts.virtualization_role | default('unknown') }}
+            type: {{ ansible_facts.virtualization_type | default('unknown') }}
+          cpu_cores: {{ ansible_facts.processor_vcpus | default('unknown') }}
+          memory_mb: {{ ansible_facts.memtotal_mb }}
+      delegate_to: localhost

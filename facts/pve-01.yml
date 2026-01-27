@@ -1,0 +1,13 @@
+hostname: pve-01
+fqdn: pve-01.home.arpa
+os:
+  distribution: Debian
+  version: 12.13
+  release: bookworm
+kernel: 6.8.12-18-pve
+architecture: x86_64
+virtualization:
+  role: host
+  type: kvm
+cpu_cores: 6
+memory_mb: 15862
