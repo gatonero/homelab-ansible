@@ -1,3 +1,20 @@
 ---
-# Base role tasks
-# System timezone intentionally left at UTC (server best practice)
+- name: Ensure locales package is installed
+  ansible.builtin.apt:
+    name: locales
+    state: present
+    update_cache: false
+  become: true
+
+- name: Ensure locale is generated
+  ansible.builtin.command:
+    cmd: "locale-gen {{ locale_lang }}"
+  become: true
+  register: locale_gen
+  changed_when: "'generated' in locale_gen.stdout"
+
+- name: Set default locale
+  ansible.builtin.command:
+    cmd: "update-locale LANG={{ locale_lang }} LC_ALL={{ locale_all }}"
+  become: true
+  changed_when: false
