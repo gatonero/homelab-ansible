@@ -1,0 +1,53 @@
+---
+- name: Gather extended system facts (read-only)
+  hosts: all
+  gather_facts: true
+
+  pre_tasks:
+    - name: Ensure local facts directory exists
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/../facts"
+        state: directory
+        mode: "0755"
+      delegate_to: localhost
+      run_once: true
+
+  tasks:
+    - name: Get SSH daemon effective configuration
+      ansible.builtin.command: sshd -T
+      register: sshd_effective
+      changed_when: false
+      failed_when: false
+
+    - name: Get NTP status
+      ansible.builtin.command: timedatectl show-timesync --all
+      register: ntp_status
+      changed_when: false
+      failed_when: false
+
+    - name: Check qemu-guest-agent status
+      ansible.builtin.systemd:
+        name: qemu-guest-agent
+      register: qemu_agent
+      changed_when: false
+      failed_when: false
+
+    - name: Write extended facts to local file
+      ansible.builtin.copy:
+        dest: "{{ playbook_dir }}/../facts/{{ inventory_hostname }}-extended.yml"
+        content: |
+          hostname: {{ inventory_hostname }}
+          os: {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }}
+          kernel: {{ ansible_facts['kernel'] }}
+
+          ssh:
+            password_authentication: "{{ 'no' if 'passwordauthentication no' in sshd_effective.stdout else 'yes' }}"
+            permit_root_login: "{{ 'key-only' if ('permitrootlogin prohibit-password' in sshd_effective.stdout or 'permitrootlogin without-password' in sshd_effective.stdout) else 'yes' }}"
+
+          ntp:
+            synchronized: "{{ 'yes' if 'SystemClockSynchronized=yes' in ntp_status.stdout else 'no' }}"
+
+          qemu_guest_agent:
+            present: {{ qemu_agent.status is defined }}
+            active: {{ qemu_agent.status.ActiveState if qemu_agent.status is defined else 'n/a' }}
+      delegate_to: localhost
