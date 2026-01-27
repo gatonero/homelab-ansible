@@ -1,3 +1,11 @@
 #SPDX-License-Identifier: MIT-0
 ---
-# defaults file for roles/docker_host
+# --------------------------------------------------
+# Docker daemon defaults
+# --------------------------------------------------
+docker_daemon_config:
+  log-driver: "json-file"
+  log-opts:
+    max-size: "10m"
+    max-file: "3"
+  live-restore: true

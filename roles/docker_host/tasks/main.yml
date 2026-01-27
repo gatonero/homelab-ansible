@@ -1,3 +1,15 @@
 #SPDX-License-Identifier: MIT-0
 ---
-# tasks file for roles/docker_host
+# --------------------------------------------------
+# Docker daemon configuration
+# --------------------------------------------------
+- name: Configure Docker daemon defaults
+  ansible.builtin.copy:
+    dest: /etc/docker/daemon.json
+    content: |
+      {{ docker_daemon_config | to_nice_json }}
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: Restart docker
