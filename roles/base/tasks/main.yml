@@ -1,0 +1,4 @@
+---
+- name: Ensure system timezone is set
+  ansible.builtin.timezone:
+    name: "{{ timezone }}"
