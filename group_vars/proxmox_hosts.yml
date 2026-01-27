@@ -1,0 +1,4 @@
+---
+# Defaults for Proxmox hosts
+
+timezone: Europe/Berlin
