@@ -1,20 +1,98 @@
 ---
+# --------------------------------------------------
+# Base system packages
+# --------------------------------------------------
+- name: Install common base packages
+  ansible.builtin.apt:
+    name: "{{ base_packages }}"
+    state: present
+    update_cache: false
+  become: true
+  when: base_packages | length > 0
+
+# --------------------------------------------------
+# Locale (defined, but not enforced live)
+# --------------------------------------------------
 - name: Ensure locales package is installed
   ansible.builtin.apt:
     name: locales
     state: present
-    update_cache: false
   become: true
 
 - name: Ensure locale is generated
   ansible.builtin.command:
     cmd: "locale-gen {{ locale_lang }}"
   become: true
-  register: locale_gen
-  changed_when: "'generated' in locale_gen.stdout"
+  changed_when: false
+  when: locale_lang is defined
 
 - name: Set default locale
   ansible.builtin.command:
     cmd: "update-locale LANG={{ locale_lang }} LC_ALL={{ locale_all }}"
   become: true
   changed_when: false
+
+# --------------------------------------------------
+# Time synchronization (NTP)
+# --------------------------------------------------
+- name: Ensure systemd-timesyncd is enabled and running
+  ansible.builtin.systemd:
+    name: systemd-timesyncd
+    enabled: true
+    state: started
+  become: true
+  when: ntp_enabled | default(false)
+
+- name: Configure NTP servers
+  ansible.builtin.copy:
+    dest: /etc/systemd/timesyncd.conf
+    content: |
+      [Time]
+      NTP={{ ntp_servers | join(' ') }}
+  become: true
+  notify: Restart systemd-timesyncd
+  when: ntp_enabled | default(false)
+
+# --------------------------------------------------
+# qemu-guest-agent (VMs only)
+# --------------------------------------------------
+- name: Enable qemu-guest-agent
+  ansible.builtin.systemd:
+    name: qemu-guest-agent
+    enabled: true
+    state: started
+  become: true
+  when: enable_qemu_guest_agent | default(false)
+
+# --------------------------------------------------
+# SSH hardening
+# --------------------------------------------------
+- name: Ensure sshd includes drop-in config
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^Include /etc/ssh/sshd_config.d/\*\.conf'
+    line: 'Include /etc/ssh/sshd_config.d/*.conf'
+    insertafter: EOF
+  become: true
+  notify: Restart sshd
+
+- name: Configure SSH hardening
+  ansible.builtin.copy:
+    dest: /etc/ssh/sshd_config.d/10-hardening.conf
+    content: |
+      PasswordAuthentication no
+      PermitRootLogin prohibit-password
+      MaxAuthTries {{ ssh_max_auth_tries }}
+  become: true
+  notify: Restart sshd
+
+# --------------------------------------------------
+# SSH authorized keys
+# --------------------------------------------------
+- name: Manage root authorized_keys
+  ansible.builtin.authorized_key:
+    user: root
+    key: "{{ ssh_authorized_keys }}"
+    exclusive: "{{ ssh_authorized_keys_exclusive }}"
+  become: true
+  when: ssh_authorized_keys | length > 0
