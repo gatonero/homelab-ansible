@@ -1,4 +1,5 @@
 ---
-# Defaults for Docker hosts
+docker_packages:
+  - qemu-guest-agent
 
-timezone: Europe/Berlin
+enable_qemu_guest_agent: true
