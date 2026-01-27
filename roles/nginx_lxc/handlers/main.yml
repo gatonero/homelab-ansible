@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: MIT-0
+---
+- name: Reload nginx
+  ansible.builtin.systemd:
+    name: nginx
+    state: reloaded
+  become: true
+
+- name: Reload systemd
+  ansible.builtin.command: systemctl daemon-reexec
+  become: true
+
+- name: Restart nginx
+  ansible.builtin.systemd:
+    name: nginx
+    state: restarted
+  become: true
