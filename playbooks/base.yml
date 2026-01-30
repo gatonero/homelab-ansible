@@ -1,0 +1,6 @@
+---
+- name: Apply base role (structure only)
+  hosts: all
+  gather_facts: false
+  roles:
+    - base
