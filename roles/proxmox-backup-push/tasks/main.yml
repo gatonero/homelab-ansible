@@ -1,0 +1,41 @@
+- name: Install vzdump uptime-kuma hook
+  copy:
+    src: vzdump-uptime-kuma-hook.sh
+    dest: /var/lib/vz/snippets/vzdump-uptime-kuma-hook.sh
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Install vzdump hook guard script
+  copy:
+    src: ensure-vzdump-hook.sh
+    dest: /usr/local/sbin/ensure-vzdump-hook.sh
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Install systemd path unit
+  copy:
+    src: vzdump-hook-guard.path
+    dest: /etc/systemd/system/vzdump-hook-guard.path
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Install systemd service unit
+  copy:
+    src: vzdump-hook-guard.service
+    dest: /etc/systemd/system/vzdump-hook-guard.service
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Reload systemd if needed
+  systemd:
+    daemon_reload: true
+
+- name: Enable and start vzdump hook guard
+  systemd:
+    name: vzdump-hook-guard.path
+    enabled: true
+    state: started
