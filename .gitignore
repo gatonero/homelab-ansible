@@ -4,3 +4,6 @@
 # Editor / OS noise
 *.swp
 .DS_Store
+# Editor swap files
+*.swp
+*.kate-swp
