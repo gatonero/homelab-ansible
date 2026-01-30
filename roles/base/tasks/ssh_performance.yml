@@ -1,0 +1,19 @@
+# --------------------------------------------------
+# SSH performance tuning
+# --------------------------------------------------
+- name: Ensure sshd_config.d directory exists
+  ansible.builtin.file:
+    path: /etc/ssh/sshd_config.d
+    state: directory
+    mode: "0755"
+  become: true
+
+- name: Disable SSH DNS and GSSAPI lookups
+  ansible.builtin.copy:
+    dest: /etc/ssh/sshd_config.d/99-performance.conf
+    mode: "0644"
+    content: |
+      UseDNS no
+      GSSAPIAuthentication no
+  become: true
+  notify: Reload ssh

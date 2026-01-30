@@ -1,2 +1,5 @@
----
-# Handlers for base role
+- name: Reload ssh
+  ansible.builtin.systemd:
+    name: ssh
+    state: reloaded
+  become: true

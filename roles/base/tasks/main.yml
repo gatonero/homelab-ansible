@@ -74,7 +74,7 @@
     line: 'Include /etc/ssh/sshd_config.d/*.conf'
     insertafter: EOF
   become: true
-  notify: Restart sshd
+  notify: Reload ssh
 
 - name: Configure SSH hardening
   ansible.builtin.copy:
@@ -84,7 +84,7 @@
       PermitRootLogin prohibit-password
       MaxAuthTries {{ ssh_max_auth_tries }}
   become: true
-  notify: Restart sshd
+  notify: Reload ssh
 
 # --------------------------------------------------
 # SSH authorized keys

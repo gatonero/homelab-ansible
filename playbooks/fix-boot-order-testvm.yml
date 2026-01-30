@@ -1,0 +1,19 @@
+- name: Fix boot order for existing VM (force CD boot)
+  hosts: proxmox_hosts
+  gather_facts: false
+
+  vars:
+    vmid: 9000
+
+  tasks:
+    - name: Ensure VM is stopped
+      ansible.builtin.command: qm stop {{ vmid }}
+      failed_when: false
+      changed_when: false
+
+    - name: Force boot order to CD first
+      ansible.builtin.command: >
+        qm set {{ vmid }} --boot order=ide2;scsi0
+
+    - name: Start VM
+      ansible.builtin.command: qm start {{ vmid }}

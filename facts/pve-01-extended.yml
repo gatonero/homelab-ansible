@@ -1,0 +1,14 @@
+hostname: pve-01
+os: Debian 12.13
+kernel: 6.8.12-18-pve
+
+ssh:
+  password_authentication: "no"
+  permit_root_login: "key-only"
+
+ntp:
+  synchronized: "no"
+
+qemu_guest_agent:
+  present: True
+  active: inactive

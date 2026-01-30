@@ -1,0 +1,20 @@
+---
+# Group variables for Cloud-Init base hosts
+# Phase 1 (Ansible configuration management)
+# Scope: all hosts in group 'ci_hosts'
+
+# Timezone configuration
+timezone: "UTC"
+
+# Locale configuration
+locale_lang: "en_US.UTF-8"
+locale_all: "en_US.UTF-8"
+
+# Base packages that should exist on every Debian CI-based VM
+base_packages:
+  - ca-certificates
+  - curl
+  - nano
+  - htop
+  - bash-completion
+  - qemu-guest-agent

@@ -1,0 +1,95 @@
+- name: Bootstrap Debian test VM
+  hosts: testvm_hosts
+  become: true
+  gather_facts: true
+
+  vars:
+    hostname: testvm-deb12
+    timezone: Europe/Berlin
+    locale_lang: en_US.UTF-8
+    locale_all: en_US.UTF-8
+    admin_user: cs
+    base_packages:
+      - sudo
+      - curl
+      - nano
+      - htop
+      - ca-certificates
+      - bash-completion
+
+  tasks:
+    - name: Ensure sudo is installed
+      ansible.builtin.apt:
+        name: sudo
+        state: present
+        update_cache: true
+
+    - name: Allow admin user to use sudo
+      ansible.builtin.user:
+        name: "{{ admin_user }}"
+        groups: sudo
+        append: true
+
+    - name: Allow passwordless sudo for admin user (Ansible use)
+      ansible.builtin.copy:
+        dest: "/etc/sudoers.d/{{ admin_user }}"
+        content: "{{ admin_user }} ALL=(ALL) NOPASSWD:ALL\n"
+        owner: root
+        group: root
+        mode: '0440'
+
+    - name: Set hostname
+      ansible.builtin.hostname:
+        name: "{{ hostname }}"
+
+    - name: Ensure /etc/hosts has hostname entry
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        regexp: '^127\\.0\\.1\\.1'
+        line: "127.0.1.1 {{ hostname }}"
+
+    - name: Ensure locale package is installed
+      ansible.builtin.apt:
+        name: locales
+        state: present
+
+    - name: Ensure LANG is set
+      ansible.builtin.lineinfile:
+        path: /etc/default/locale
+        regexp: '^LANG='
+        line: "LANG={{ locale_lang }}"
+        create: true
+
+    - name: Ensure LC_ALL is set
+      ansible.builtin.lineinfile:
+        path: /etc/default/locale
+        regexp: '^LC_ALL='
+        line: "LC_ALL={{ locale_all }}"
+        create: true
+
+    - name: Generate locale
+      ansible.builtin.command: locale-gen {{ locale_lang }}
+      changed_when: false
+
+    - name: Set timezone
+      ansible.builtin.timezone:
+        name: "{{ timezone }}"
+
+    - name: Ensure .ssh directory exists for admin user
+      ansible.builtin.file:
+        path: "/home/{{ admin_user }}/.ssh"
+        state: directory
+        owner: "{{ admin_user }}"
+        group: "{{ admin_user }}"
+        mode: '0700'
+
+    - name: Install authorized SSH key for admin user
+      ansible.builtin.authorized_key:
+        user: "{{ admin_user }}"
+        state: present
+        key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_ed25519.pub') }}"
+
+    - name: Install base packages
+      ansible.builtin.apt:
+        name: "{{ base_packages }}"
+        state: present

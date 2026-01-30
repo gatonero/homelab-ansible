@@ -1,0 +1,90 @@
+---
+
+# Phase 1: Configuration Management (root-only)
+
+# Assumptions:
+
+# - VM provisioned via Cloud-Init (Phase 0)
+
+# - SSH access via key as root works
+
+# - No sudo, no user management
+
+* name: Bootstrap Debian VM (idempotent, root-only)
+  hosts: all
+  gather_facts: true
+  become: false
+
+  vars:
+  timezone: "UTC"
+  locale_lang: "en_US.UTF-8"
+  locale_all: "en_US.UTF-8"
+  base_packages:
+  - ca-certificates
+  - curl
+  - nano
+  - htop
+  - bash-completion
+  - qemu-guest-agent
+
+  tasks:
+
+  * name: Ensure APT cache is up to date
+    ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+  * name: Ensure base packages are installed
+    ansible.builtin.apt:
+    name: "{{ base_packages }}"
+    state: present
+
+  * name: Ensure qemu-guest-agent is enabled and started
+    ansible.builtin.service:
+    name: qemu-guest-agent
+    state: started
+    enabled: true
+
+  * name: Set timezone
+    ansible.builtin.timezone:
+    name: "{{ timezone }}"
+
+  * name: Ensure locale package is installed
+    ansible.builtin.apt:
+    name: locales
+    state: present
+
+  * name: Ensure locale configuration
+    ansible.builtin.lineinfile:
+    path: /etc/locale.gen
+    regexp: '^{{ locale_lang }}'
+    line: '{{ locale_lang }} UTF-8'
+
+  * name: Generate locale
+    ansible.builtin.command: locale-gen
+    args:
+    creates: "/usr/lib/locale/{{ locale_lang }}"
+
+  * name: Set default locale
+    ansible.builtin.copy:
+    dest: /etc/default/locale
+    content: |
+    LANG={{ locale_lang }}
+    LC_ALL={{ locale_all }}
+
+  * name: Ensure SSH root login is key-only (hardened)
+    ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^PermitRootLogin'
+    line: 'PermitRootLogin prohibit-password'
+
+  * name: Ensure password authentication is disabled
+    ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^PasswordAuthentication'
+    line: 'PasswordAuthentication no'
+
+  * name: Restart SSH service
+    ansible.builtin.service:
+    name: ssh
+    state: restarted

@@ -1,0 +1,41 @@
+- name: Create Debian 12 test VM on Proxmox
+  hosts: proxmox_hosts
+  gather_facts: false
+
+  vars:
+    vmid: 9000
+    vm_name: testvm-deb12
+    vm_memory: 2048
+    vm_cores: 2
+    vm_disk: local-lvm:32
+    vm_iso: local:iso/debian-12.5.0-amd64-netinst.iso
+
+  tasks:
+    - name: Check if VM already exists
+      ansible.builtin.command: qm status {{ vmid }}
+      register: vm_status
+      failed_when: false
+      changed_when: false
+
+    - name: Create VM
+      ansible.builtin.command: >
+        qm create {{ vmid }}
+        --name {{ vm_name }}
+        --memory {{ vm_memory }}
+        --cores {{ vm_cores }}
+        --net0 virtio,bridge=vmbr0
+        --scsihw virtio-scsi-pci
+        --scsi0 {{ vm_disk }}
+        --ide2 {{ vm_iso }},media=cdrom
+        --ostype l26
+      when: vm_status.rc != 0
+
+    - name: Set boot order (CD first for installation)
+      ansible.builtin.command: >
+        qm set {{ vmid }} --boot order=ide2;scsi0
+      when: vm_status.rc != 0
+
+    - name: Start VM
+      ansible.builtin.command: >
+        qm start {{ vmid }}
+      when: vm_status.rc != 0

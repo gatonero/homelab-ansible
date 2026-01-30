@@ -1,0 +1,21 @@
+- name: Finalize VM on Proxmox (post-installation)
+  hosts: proxmox_hosts
+  gather_facts: false
+
+  vars:
+    vmid: 9000
+
+  tasks:
+    - name: Ensure VM is stopped
+      ansible.builtin.command: qm stop {{ vmid }}
+      failed_when: false
+      changed_when: false
+
+    - name: Remove installation ISO (CD-ROM)
+      ansible.builtin.command: qm set {{ vmid }} --delete ide2
+
+    - name: Set boot order to disk only
+      ansible.builtin.command: qm set {{ vmid }} --boot order=scsi0
+
+    - name: Start VM
+      ansible.builtin.command: qm start {{ vmid }}
