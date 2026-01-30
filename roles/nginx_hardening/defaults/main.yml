@@ -1,0 +1,27 @@
+# TLS
+nginx_tls_protocols: "TLSv1.2 TLSv1.3"
+nginx_ssl_prefer_server_ciphers: true
+nginx_ssl_session_cache: "shared:SSL:10m"
+nginx_ssl_session_timeout: "10m"
+nginx_ssl_session_tickets: false
+
+# OCSP
+nginx_enable_ocsp_stapling: true
+nginx_dns_resolvers:
+  - 1.1.1.1
+  - 8.8.8.8
+nginx_resolver_valid: "300s"
+
+# Security Header
+nginx_enable_hsts: true
+nginx_hsts_max_age: 15552000
+nginx_hsts_include_subdomains: false
+nginx_hsts_preload: false
+
+nginx_enable_csp: false
+nginx_csp_policy: "default-src 'self'"
+
+nginx_security_headers:
+  - { name: "X-Content-Type-Options", value: "nosniff" }
+  - { name: "X-Frame-Options", value: "DENY" }
+  - { name: "Referrer-Policy", value: "strict-origin-when-cross-origin" }

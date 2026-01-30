@@ -1,0 +1,5 @@
+- name: Apply firewall (nftables) on VM 1000
+  hosts: ci_hosts
+  become: true
+  roles:
+    - firewall

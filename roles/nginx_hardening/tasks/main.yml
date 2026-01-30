@@ -1,0 +1,15 @@
+- name: Ensure nginx conf.d directory exists
+  file:
+    path: /etc/nginx/conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy global nginx security configuration
+  template:
+    src: 00-security.conf.j2
+    dest: /etc/nginx/conf.d/00-security.conf
+    owner: root
+    group: root
+    mode: "0644"

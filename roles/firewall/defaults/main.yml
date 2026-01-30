@@ -1,0 +1,8 @@
+firewall_lan_cidrs:
+  - 192.168.1.0/24
+
+firewall_allowed_tcp_ports:
+  - 80
+  - 443
+
+firewall_ssh_port: 22

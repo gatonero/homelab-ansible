@@ -1,0 +1,5 @@
+- name: Apply nginx global hardening on VM 1000
+  hosts: ci_hosts
+  become: true
+  roles:
+    - nginx_hardening
