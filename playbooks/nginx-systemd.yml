@@ -1,0 +1,74 @@
+---
+- name: Install and configure nginx as systemd service
+  hosts: nginx_base
+  become: true
+
+  tasks:
+    - name: Install nginx package
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+
+    - name: Ensure nginx service is enabled and started
+      systemd:
+        name: nginx
+        enabled: true
+        state: started
+
+    - name: Remove default site configuration
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      notify: Reload nginx
+
+    - name: Ensure basic nginx directories exist
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - /etc/nginx/conf.d
+        - /var/www
+
+    - name: Deploy minimal baseline nginx configuration
+      copy:
+        dest: /etc/nginx/conf.d/00-baseline.conf
+        mode: '0644'
+        content: |
+          server {
+              listen 80 default_server;
+              listen [::]:80 default_server;
+
+              server_name _;
+
+              root /var/www;
+              index index.html;
+
+              location / {
+                  try_files $uri $uri/ =404;
+              }
+          }
+      notify: Reload nginx
+
+    - name: Deploy placeholder index.html
+      copy:
+        dest: /var/www/index.html
+        mode: '0644'
+        content: |
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="utf-8">
+              <title>nginx-base</title>
+          </head>
+          <body>
+              <h1>nginx-base is running</h1>
+          </body>
+          </html>
+
+  handlers:
+    - name: Reload nginx
+      systemd:
+        name: nginx
+        state: reloaded

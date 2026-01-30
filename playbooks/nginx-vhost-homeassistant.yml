@@ -1,0 +1,50 @@
+---
+- name: Deploy homeassistant vHost on nginx-base (shadow mode)
+  hosts: nginx_base
+  become: true
+
+  vars:
+    vhost_name: homeassistant
+    server_name: homeassistant.home.arpa
+    backend_host: 192.168.1.40
+    backend_port: 8123
+
+  tasks:
+    - name: Ensure sites-available and sites-enabled directories exist
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - /etc/nginx/sites-available
+        - /etc/nginx/sites-enabled
+
+    - name: Deploy homeassistant vHost configuration
+      copy:
+        dest: "/etc/nginx/sites-available/{{ vhost_name }}.conf"
+        mode: '0644'
+        content: |
+          server {
+              listen 80;
+              server_name {{ server_name }};
+
+              include snippets/proxy-common.conf;
+
+              location / {
+                  proxy_pass http://{{ backend_host }}:{{ backend_port }};
+              }
+          }
+      notify: Reload nginx
+
+    - name: Enable homeassistant vHost (symlink)
+      file:
+        src: "/etc/nginx/sites-available/{{ vhost_name }}.conf"
+        dest: "/etc/nginx/sites-enabled/{{ vhost_name }}.conf"
+        state: link
+      notify: Reload nginx
+
+  handlers:
+    - name: Reload nginx
+      systemd:
+        name: nginx
+        state: reloaded

@@ -1,0 +1,47 @@
+---
+- name: Configure nginx-base host (technical base only)
+  hosts: nginx_base
+  become: true
+
+  tasks:
+    - name: Install base packages
+      apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+          - vim
+          - htop
+          - tree
+        state: present
+        update_cache: yes
+
+    - name: Set conservative sysctl defaults for network stability
+      copy:
+        dest: /etc/sysctl.d/99-nginx-base.conf
+        mode: '0644'
+        content: |
+          net.core.somaxconn = 1024
+          net.ipv4.tcp_fin_timeout = 15
+          net.ipv4.tcp_keepalive_time = 600
+          net.ipv4.ip_local_port_range = 10240 65535
+      notify: Apply sysctl
+
+    - name: Ensure limits directory exists
+      file:
+        path: /etc/security/limits.d
+        state: directory
+        mode: '0755'
+
+    - name: Set conservative file descriptor limits
+      copy:
+        dest: /etc/security/limits.d/nginx-base.conf
+        mode: '0644'
+        content: |
+          * soft nofile 65535
+          * hard nofile 65535
+
+  handlers:
+    - name: Apply sysctl
+      command: sysctl --system

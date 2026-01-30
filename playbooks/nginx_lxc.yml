@@ -1,0 +1,5 @@
+---
+- name: Configure NGINX LXC hosts
+  hosts: nginx_hosts
+  roles:
+    - nginx_lxc
