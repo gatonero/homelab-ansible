@@ -1,0 +1,11 @@
+watchtower_image: containrrr/watchtower
+watchtower_tag: latest
+
+watchtower_name: watchtower
+
+watchtower_monitor_only: true
+watchtower_cleanup: false
+watchtower_include_stopped: false
+
+watchtower_schedule: "0 0 4 * * *"
+watchtower_notification_level: info
